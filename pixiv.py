@@ -6,7 +6,6 @@ import requests
 import datetime
 import time
 import urllib.request
-from pprint import pprint
 
 day = datetime.date.today()
 def main():
