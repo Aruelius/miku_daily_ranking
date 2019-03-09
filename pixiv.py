@@ -11,7 +11,7 @@ day = datetime.date.today()
 def main():
     start = time.time()
     for page in range(1, 11, 1):
-        url = 'https://www.pixiv.pro/ranking.php?mode=daily&p=' + str(page) + '&format=json'
+        url = 'https://www.pixiv.cool/ranking.php?mode=daily&p=' + str(page) + '&format=json'
         try:
             response = requests.get(url)
             resp = response.json()
@@ -40,10 +40,10 @@ def main():
                     print('--------------')
                     print('正在下载...')
                     for pageid in range(0,10,1):
-                    	imgurl = 'https://i.pximg.pixiv.pro/img-original/img/' + str(y) + '/' + str(mo) + '/' + str(d) + '/' + str(h) + '/' + str(mi) + '/' + str(s) + '/' + str(pid) + '_p' + str(pageid) + '.png'
+                    	imgurl = 'https://i.pximg.pixiv.cool/img-original/img/' + str(y) + '/' + str(mo) + '/' + str(d) + '/' + str(h) + '/' + str(mi) + '/' + str(s) + '/' + str(pid) + '_p' + str(pageid) + '.png'
                     	r = requests.get(imgurl)
                     	if r.status_code !=200:
-                    		imgurl = 'https://i.pximg.pixiv.pro/img-original/img/' + str(y) + '/' + str(mo) + '/' + str(d) + '/' + str(h) + '/' + str(mi) + '/' + str(s) + '/' + str(pid) + '_p' + str(pageid) + '.jpg'
+                    		imgurl = 'https://i.pximg.pixiv.cool/img-original/img/' + str(y) + '/' + str(mo) + '/' + str(d) + '/' + str(h) + '/' + str(mi) + '/' + str(s) + '/' + str(pid) + '_p' + str(pageid) + '.jpg'
                     		f = requests.get(imgurl)
                     		if f.status_code == 200:
                     			if os.path.exists(str(day)):
