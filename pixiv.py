@@ -3,7 +3,6 @@ import asyncio
 import datetime
 
 import aiohttp
-import requests
 
 
 class Miku():
