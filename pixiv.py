@@ -1,74 +1,91 @@
 # -*- coding:utf-8 -*-
-import os
-import json
-import random
-import requests
+import asyncio
 import datetime
-import time
-import urllib.request
 
-day = datetime.date.today()
-def main():
-    start = time.time()
-    for page in range(1, 11, 1):
-        url = 'https://www.pixiv.net/ranking.php?mode=daily&p=' + str(page) + '&format=json'
-        try:
-            response = requests.get(url, headers = {"referer":"https://www.pixiv.net/"})
-            resp = response.json()
-            for pidid in range(0,50,1):
-                if '初音ミク' in str(resp['contents'][pidid]):
-                    title = resp['contents'][pidid]['title']
-                    date = resp['contents'][pidid]['date']
-                    pid = resp['contents'][pidid]['illust_id']
-                    width = resp['contents'][pidid]['width']
-                    height = resp['contents'][pidid]['height']
-                    rank = resp['contents'][pidid]['rank']
-                    url = resp['contents'][pidid]['url']
-                    y = url.split('/')[7]
-                    mo = url.split('/')[8]
-                    d = url.split('/')[9]
-                    h = url.split('/')[10]
-                    mi = url.split('/')[11]
-                    s = url.split('/')[12]
-                    pagecount = resp['contents'][pidid]['illust_page_count']
-                    print('----------------------------')
-                    print('日榜排名:',rank)
-                    print('标题:',title)
-                    print('上传时间:',date)
-                    print('图片ID:',pid)
-                    print('分辨率:',width,'x',height)
-                    print('--------------')
-                    print('正在下载...')
-                    for pageid in range(0,10,1):
-                    	imgurl = 'https://i.pximg.net/img-original/img/' + str(y) + '/' + str(mo) + '/' + str(d) + '/' + str(h) + '/' + str(mi) + '/' + str(s) + '/' + str(pid) + '_p' + str(pageid) + '.png'
-                    	r = requests.get(imgurl, headers = {"referer":"https://www.pixiv.net/"})
-                    	if r.status_code !=200:
-                    		imgurl = 'https://i.pximg.net/img-original/img/' + str(y) + '/' + str(mo) + '/' + str(d) + '/' + str(h) + '/' + str(mi) + '/' + str(s) + '/' + str(pid) + '_p' + str(pageid) + '.jpg'
-                    		f = requests.get(imgurl, headers = {"referer":"https://www.pixiv.net/"})
-                    		if f.status_code == 200:
-                    			if os.path.exists(str(day)):
-                    				with open(str(day) + "/" + str(pid) + "_p" + str(pageid) + ".jpg", "wb") as code:
-                    					code.write(f.content)
-                    			else:
-                    				os.mkdir(str(day))
-                    				with open(str(day) + "/" + str(pid) + "_p" + str(pageid) + ".jpg", "wb") as code:
-                    					code.write(f.content)
-
-                    				#print('下载完毕！')
-                    	else:
-                    		if os.path.exists(str(day)):
-                    			with open(str(day) + "/" + str(pid) + "_p" + str(pageid) + ".png", "wb") as code:
-                    				code.write(r.content)
-                    		else:
-                    			os.mkdir(str(day))
-                    			with open(str(day) + "/" + str(pid) + "_p" + str(pageid) + ".png", "wb") as code:
-                    				code.write(r.content)
-
-                    			#print('下载完毕！')
-            #time.sleep(1)
-        except:
-            pass
+import aiohttp
+import requests
 
 
-if __name__ == '__main__':
-    main()
+class Miku():
+    def __init__(self, proxy=None):
+        self.NAME = "初音ミク"
+        self.IMG_URL = "https://i.pximg.net/img-original/img/"
+        self.headers = {"referer": "https://www.pixiv.net/"}
+        self.proxy = proxy if proxy else None
+        self.get_date = lambda: str(datetime.date.today())
+        self.ranking_url = lambda p: f"https://www.pixiv.net/ranking.php?mode=daily&p={p}&format=json"
+    
+    async def req(self, url: str):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=self.headers,
+                    proxy=self.proxy) as r:
+                return await r
+
+    async def png_or_jpg(self, url: str):
+        for suffix in [".png", ".jpg"]:
+            async with aiohttp.ClientSession() as session:
+                async with session.head(url + suffix,
+                        headers=self.headers,
+                        proxy=self.proxy) as r:
+                    if r.status == 200: return suffix
+
+    async def write_file(self, file_path: str, r):
+        with open(file_path, "wb") as f:
+            while True:
+                chunk = await r.content.read(128*1024)
+                if not chunk:
+                    break
+                f.write(chunk)
+            f.close()
+
+    async def download(self, content: dict):
+        title = content["title"]
+        up_date = content["date"]
+        pixiv_id = content["illust_id"]
+        width = content["width"]
+        height = content["height"]
+        rank = content["rank"]
+        illust_page_count = content["illust_page_count"]
+        
+        path_list = content["url"].split('/')
+        year, month, day, hour, minute, second = [_ for _ in path_list[7:13]]
+
+        print("=" * 39)
+        print("日榜排名:", rank)
+        print("标题:", title)
+        print("上传日期:", up_date)
+        print("图片ID", pixiv_id)
+        print(f"分辨率: {width} X {height}")
+
+        tasks = []
+        for index in illust_page_count:
+            url = f"{self.IMG_URL}{year}/{month}/{day}/{hour}/{minute}/{second}/{pixiv_id}_p{index}"
+            suffix = await self.png_or_jpg(url)
+            image_url = f"{url}{suffix}"
+            tasks.append(asyncio.create_task(
+                self.write_file(
+                    file_path=f"./Miku/{self.get_date()}/{image_url.split('/')[-1]}",
+                    r=await self.req(image_url)
+            )))
+        for task in tasks:
+            await task
+    
+    async def fetch(self, url: str):
+        tasks = []
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=self.headers, proxy=self.proxy) as r:
+                response = await r.json()
+        for content in response["contents"]:
+            print(content["title"])
+            if self.NAME in content:
+                tasks.append(asyncio.create_task(self.download(content)))
+        for task in tasks:
+            await task
+    
+    def main(self):
+        for p in range(1, 11):
+            asyncio.run(self.fetch(self.ranking_url(p)))
+
+if __name__ == "__main__":
+    miku = Miku()
+    miku.main()
