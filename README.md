@@ -1,4 +1,4 @@
-# get-pixiv-daily-ranking
+# miku_daily_ranking
 ## 获取pixiv日榜排行榜中的初音未来的图片  
 1. Python3
 2. 代码默认在运行目录下创建一个当前时间的文件夹 格式：yy-mm-dd 例：2019-02-14  
