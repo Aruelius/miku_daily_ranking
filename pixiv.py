@@ -79,9 +79,15 @@ class Miku():
         for task in tasks:
             await task
         
-    def main(self):
+    async def run(self):
+        tasks = []
         for p in range(1, 11):
-            asyncio.run(self.fetch(self.ranking_url(p)))
+            tasks.append(asyncio.create_task(self.fetch(self.ranking_url(p))))
+        for task in tasks:
+            await task
+
+    def main(self):
+        asyncio.run(self.run())
 
 if __name__ == "__main__":
     miku = Miku()
