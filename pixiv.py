@@ -75,8 +75,7 @@ class Miku():
             async with session.get(url, headers=self.headers, proxy=self.proxy) as r:
                 response = await r.json()
         for content in response["contents"]:
-            print(content["title"])
-            if self.NAME in content:
+            if self.NAME in str(content):
                 tasks.append(asyncio.create_task(self.download(content)))
         for task in tasks:
             await task
