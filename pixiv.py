@@ -14,7 +14,7 @@ class Miku():
         self.IMG_URL = "https://i.pximg.net/img-original/img/"
         self.headers = {"referer": "https://www.pixiv.net/"}
         self.proxy = proxy if proxy else None
-        self.get_path = lambda: f"/root/miku_daily_ranking/Miku/{str(datetime.date.today())}/"
+        self.get_path = lambda: f"./Miku/{str(datetime.date.today())}/"
         self.ranking_url = lambda p: f"https://www.pixiv.net/ranking.php?mode=daily&p={p}&format=json"
         self.zip_url = lambda pid: f"https://www.pixiv.net/ajax/illust/{pid}/ugoira_meta"
         self.optimize_gif = False # 是否压缩GIF, 默认否
@@ -132,5 +132,5 @@ class Miku():
         asyncio.run(self.run())
 
 if __name__ == "__main__":
-    miku = Miku("http://127.0.0.1:8118")
+    miku = Miku()
     miku.main()
