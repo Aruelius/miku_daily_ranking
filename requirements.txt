@@ -1,1 +1,4 @@
 aiohttp
+imageio
+numpy
+pygifsicle
